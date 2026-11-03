@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>كويز الفصل الأول: مقدمة في اللينكس</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#1b2430;--muted:#5d6b7c;--line:#d5dde8;--accent:#1f6feb;--ok:#1a7f4b;--okbg:#e3f5ea;--bad:#c62f3b;--badbg:#fde8ea;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10161f;--card:#1a2230;--text:#e8edf4;--muted:#9aa8ba;--line:#2e3a4c;--accent:#5b9bff;--ok:#5fd18f;--okbg:#17382a;--bad:#ff7b86;--badbg:#3d1d22;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10161f;--card:#1a2230;--text:#e8edf4;--muted:#9aa8ba;--line:#2e3a4c;--accent:#5b9bff;--ok:#5fd18f;--okbg:#17382a;--bad:#ff7b86;--badbg:#3d1d22;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Tahoma,"Segoe UI",Arial,sans-serif;line-height:1.8;font-size:18px}
+main{max-width:640px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.25rem;margin:8px 0 14px}
+.bar{height:8px;background:var(--line);border-radius:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.count{color:var(--muted);font-size:.9rem;margin:8px 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+.q{font-size:1.2rem;font-weight:700;margin:0 0 16px}
+.opt{display:block;width:100%;text-align:right;font:inherit;color:inherit;background:var(--card);border:2px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:focus-visible,.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.opt.ok{border-color:var(--ok);background:var(--okbg)}
+.opt.bad{border-color:var(--bad);background:var(--badbg)}
+.opt:disabled{cursor:default}
+.note{margin-top:6px;padding:12px 14px;border-radius:10px;background:var(--bg);color:var(--muted);font-size:.95rem}
+.btn{font:inherit;font-weight:700;background:var(--accent);color:#fff;border:0;border-radius:10px;padding:12px 24px;margin-top:16px;cursor:pointer}
+.big{font-size:3rem;font-weight:700;text-align:center;margin:10px 0}
+.msg{text-align:center;margin:0 0 6px}
+.hidden{display:none}
+.inp{display:block;width:100%;font:inherit;color:var(--text);background:var(--card);border:2px solid var(--line);border-radius:10px;padding:12px 14px;margin:8px 0 4px}
+.inp:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-color:var(--accent)}
+.err{color:var(--bad);font-size:.9rem;min-height:1.6em;margin:0}
+.res{background:var(--bg);border-radius:10px;padding:12px 14px;margin:12px 0;text-align:center;font-weight:700}
+.qr{display:inline-block;background:#fff;padding:12px;border-radius:10px;margin-top:12px}
+.sub{color:var(--muted);font-size:.9rem;margin:6px 0 0}
+</style>
+</head>
+<body>
+<main>
+<h1>كويز الفصل الأول: مقدمة في اللينكس</h1>
+<div class="card" id="start">
+  <p class="q">اكتبي اسمك ثم ابدئي الكويز</p>
+  <label for="nm" class="sub">اسم الطالبة</label>
+  <input class="inp" id="nm" type="text" maxlength="60" autocomplete="name">
+  <p class="err" id="err"></p>
+  <button class="btn" id="go" type="button" style="margin-top:6px">ابدئي الكويز</button>
+</div>
+<div class="card hidden" id="teacher">
+  <p class="q">باركود الكويز</p>
+  <p class="sub">الصقي رابط المشاركة هنا ثم اضغطي إنشاء الباركود. اعرضيه على الشاشة أو صوّريه.</p>
+  <input class="inp" id="url" type="text" dir="ltr" value="https://claude.ai/artifact/TGP2m8wauF49DXAXfdPH37">
+  <div style="text-align:center"><div class="qr" id="qr"></div></div>
+  <button class="btn" id="mk" type="button">إنشاء الباركود</button>
+</div>
+<div id="quiz" class="hidden">
+  <div class="bar"><i id="fill"></i></div>
+  <div class="count" id="count"></div>
+  <div class="card">
+    <p class="q" id="q"></p>
+    <div id="opts"></div>
+    <div class="note hidden" id="note"></div>
+    <button class="btn hidden" id="next" type="button">التالي</button>
+  </div>
+</div>
+<div class="card hidden" id="result">
+  <div class="big" id="score"></div>
+  <div class="res" id="resline"></div>
+  <p class="msg" id="rmsg"></p>
+  <div style="text-align:center"><button class="btn" id="copy" type="button">نسخ النتيجة</button>
+  <p class="sub" id="cmsg">لا يمكن إعادة الكويز. انسخي النتيجة وأرسليها للمعلمة، أو صوّري الشاشة.</p>
+  </div>
+</div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+var Q=[
+{q:"ما وظيفة نظام التشغيل؟",o:["حماية الشبكة من الاختراق وتشفير الملفات","تحويل لغة البرمجة إلى لغة الآلة فقط","إدارة موارد الحاسوب وتوفير واجهة بين المستخدم والأجهزة","تسريع الاتصال بالإنترنت وتنظيم الملفات"],a:2,n:"صفحة 9"},
+{q:"في أي عام بدأ مشروع لينكس؟",o:["1989","1991","1995","2001"],a:1,n:"بدأ عام 1991، صفحة 9"},
+{q:"من أطلق مشروع نواة لينكس؟",o:["ريتشارد ستولمان","ثيو دي رادت","لينوس تورفالدس","دينيس ريتشي"],a:2,n:"الطالب الفنلندي لينوس تورفالدس، صفحة 9"},
+{q:"تحت أي رخصة نُشرت نواة لينكس؟",o:["Apache 2.0","MIT","BSD","GNU GPL"],a:3,n:"رخصة جنو العمومية (GPL)، صفحة 9"},
+{q:"ما هي النواة (Kernel)؟",o:["الواجهة الرسومية التي يتعامل معها المستخدم","الجزء المسؤول عن إدارة المعالج والذاكرة والتخزين والتواصل مع البرامج","مدير الحزم الذي يثبّت البرامج","مجموعة المكتبات والأدوات التي تضيفها التوزيعة"],a:1,n:"صفحة 10"},
+{q:"ما معنى «التوزيعة» (Distro) في لينكس؟",o:["النواة وحدها بدون أي برامج","رخصة استخدام لنظام لينكس","النواة مع أدوات ومكتبات ومدير حزم وواجهات، يجمعها أفراد أو شركات","نسخة قديمة من النواة"],a:2,n:"صفحة 11"},
+{q:"أي توزيعة موجهة للمبتدئين والمكاتب؟",o:["Fedora","Ubuntu","Debian","Manjaro"],a:1,n:"Ubuntu: للمبتدئين والمكاتب، صفحة 12"},
+{q:"كم يبلغ عدد توزيعات لينكس تقريباً حول العالم؟",o:["أقل من 100","حوالي 150","أكثر من 300","أكثر من 3000"],a:2,n:"صفحة 12"},
+{q:"ما أبرز عيوب نظام ويندوز؟",o:["ضعف دعمه للألعاب والتصميم","قلة البرامج المتوافقة معه","عمله على أجهزة شركة واحدة فقط","ضعف الحماية أمام الفيروسات والبرمجيات الخبيثة"],a:3,n:"صفحة 16"},
+{q:"حسب جدول المقارنة، أي نظام مجاني وعالي الأمان وقابل للتخصيص؟",o:["GNU/Linux","Windows","macOS","جميعها متساوية"],a:0,n:"صفحة 15"}
+];
+var i=0,score=0,locked=false;
+var $=function(id){return document.getElementById(id)};
+function show(){
+  locked=false;
+  var c=Q[i];
+  $("count").textContent="السؤال "+(i+1)+" من "+Q.length;
+  $("fill").style.width=(i/Q.length*100)+"%";
+  $("q").textContent=c.q;
+  $("note").classList.add("hidden");
+  $("next").classList.add("hidden");
+  var box=$("opts");box.innerHTML="";
+  c.o.forEach(function(t,k){
+    var b=document.createElement("button");
+    b.type="button";b.className="opt";b.textContent=t;
+    b.onclick=function(){pick(k)};
+    box.appendChild(b);
+  });
+}
+function pick(k){
+  if(locked)return;locked=true;
+  var c=Q[i],bs=$("opts").children;
+  for(var j=0;j<bs.length;j++){bs[j].disabled=true}
+  bs[c.a].classList.add("ok");
+  var right=(k===c.a);
+  if(right){score++}else{bs[k].classList.add("bad")}
+  if(st){st.i=i+1;st.score=score;save(st)}
+  $("note").textContent=(right?"إجابة صحيحة. ":"إجابة خاطئة. ")+c.n;
+  $("note").classList.remove("hidden");
+  $("next").textContent=(i===Q.length-1)?"شوف النتيجة":"التالي";
+  $("next").classList.remove("hidden");
+  $("next").focus();
+}
+$("next").onclick=function(){
+  i++;
+  if(i>=Q.length){finish()}else{show()}
+};
+function finish(){
+  $("quiz").classList.add("hidden");
+  $("result").classList.remove("hidden");
+  $("score").textContent=score+" / "+Q.length;
+  $("resline").textContent=resultText();
+  var p=score/Q.length;
+  $("rmsg").textContent=p>=0.9?"ممتاز، أنت متمكن من الفصل.":p>=0.6?"جيد، راجع الأسئلة اللي أخطأت فيها وأعد المحاولة.":"راجع الفصل الأول مرة ثانية وحاول من جديد.";
+}
+var nameVal="";
+var KEY="linux_quiz_ch1_v1";
+var st=null;
+function load(){try{return JSON.parse(localStorage.getItem(KEY))}catch(e){return null}}
+function save(o){try{localStorage.setItem(KEY,JSON.stringify(o))}catch(e){}}
+function resultText(){
+  var d=new Date().toLocaleDateString("ar-SA");
+  return "الطالبة: "+nameVal+" | الدرجة: "+score+" من "+Q.length+" ("+Math.round(score/Q.length*100)+"%) | "+d;
+}
+$("go").onclick=function(){
+  var v=$("nm").value.trim();
+  if(!v){$("err").textContent="اكتبي اسمك أولاً.";$("nm").focus();return}
+  $("err").textContent="";nameVal=v;i=0;score=0;st={name:v,i:0,score:0};save(st);
+  $("start").classList.add("hidden");
+  $("quiz").classList.remove("hidden");
+  show();
+};
+$("copy").onclick=function(){
+  var t=resultText(),m=$("cmsg");
+  function ok(){m.textContent="تم نسخ النتيجة."}
+  function fb(){
+    var a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();
+    try{document.execCommand("copy");ok()}catch(e){m.textContent="تعذر النسخ، صوّري الشاشة."}
+    document.body.removeChild(a);
+  }
+  try{navigator.clipboard.writeText(t).then(ok,fb)}catch(e){fb()}
+};
+function makeQR(){
+  var u=$("url").value.trim(),b=$("qr");
+  b.innerHTML="";
+  if(!u||typeof QRCode==="undefined"){b.textContent="تعذر إنشاء الباركود";return}
+  try{new QRCode(b,{text:u,width:240,height:240,correctLevel:QRCode.CorrectLevel.M})}catch(e){b.textContent="تعذر إنشاء الباركود"}
+}
+$("mk").onclick=makeQR;
+function route(){
+  var t=(location.hash==="#teacher");
+  $("teacher").classList.toggle("hidden",!t);
+  if(t){$("start").classList.add("hidden");$("quiz").classList.add("hidden");$("result").classList.add("hidden");makeQR()}
+  else if($("quiz").classList.contains("hidden")&&$("result").classList.contains("hidden")){
+    var s=load();
+    if(s&&s.name){
+      st=s;nameVal=s.name;i=s.i;score=s.score;
+      $("start").classList.add("hidden");
+      if(i>=Q.length){finish()}else{$("quiz").classList.remove("hidden");show()}
+    }else{$("start").classList.remove("hidden")}
+  }
+}
+window.addEventListener("hashchange",route);
+window.addEventListener("load",route);
+</script>
+</body>
+</html>
